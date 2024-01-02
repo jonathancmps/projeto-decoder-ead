@@ -85,6 +85,4 @@ public class ModuleController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(moduleModelOptional.get());
     }
-
-
 }
