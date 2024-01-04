@@ -6,9 +6,7 @@ import com.ead.authuser.enums.UserType;
 import com.ead.authuser.models.UserModel;
 import com.ead.authuser.service.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,12 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+@Log4j2
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/auth")
 public class AuthenticationController {
-
-    Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
     @Autowired
     UserService userService;
@@ -32,11 +29,14 @@ public class AuthenticationController {
     @PostMapping("/signup")
     public ResponseEntity<Object> registerUser(@RequestBody @Validated(UserDto.UserView.RegistrationPost.class)
                                                    @JsonView(UserDto.UserView.RegistrationPost.class) UserDto userDto) {
+        log.debug("POST registerUser userDto received {}", userDto.toString());
         if (userService.existsByUsername(userDto.getUsername())){
-            ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Username is Already Taken!");
+            log.warn("Username {} is Already Taken", userDto.getUsername());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Username is Already Taken!");
         }
         if (userService.existsByEmail(userDto.getEmail())){
-            ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Username is Already Taken!");
+            log.warn("Email {} is Already Taken", userDto.getEmail());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Email is Already Taken!");
         }
         var userModel = new UserModel();
         BeanUtils.copyProperties(userDto, userModel);
@@ -45,16 +45,18 @@ public class AuthenticationController {
         userModel.setCreationDate(LocalDateTime.now(ZoneId.of("UTC")));
         userModel.setLastUpdateDate(LocalDateTime.now(ZoneId.of("UTC")));
         userService.save(userModel);
+        log.debug("POST registerUser userModel saved {}", userModel.toString());
+        log.info("User saved sucessfully userId {}", userModel.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
     }
 
     @GetMapping("/")
     private String index() {
-        logger.trace("TRACE");
-        logger.debug("DEBUG");
-        logger.info("INFO");
-        logger.warn("WARN");
-        logger.error("ERROR");
+        log.trace("TRACE");
+        log.debug("DEBUG");
+        log.info("INFO");
+        log.warn("WARN");
+        log.error("ERROR");
         return ("Logging Spring Boot");
     }
 
